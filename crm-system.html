@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM PRO - 客户关系管理系统</title>
+    <style>
+        :root {
+            --primary: #1890ff;
+            --primary-light: #e6f7ff;
+            --primary-dark: #096dd9;
+            --success: #52c41a;
+            --warning: #faad14;
+            --error: #ff4d4f;
+            --sidebar-bg: #001529;
+            --text-main: #333;
+            --text-sub: #666;
+            --text-muted: #999;
+            --bg-body: #f0f2f5;
+            --border-color: #d9d9d9;
+            --header-h: 60px;
+            --sidebar-w: 240px;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --radius: 8px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg-body); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; }
+        #app { display: flex; width: 100%; height: 100%; }
+        .sidebar { width: var(--sidebar-w); background: var(--sidebar-bg); color: rgba(255,255,255,0.65); display: flex; flex-direction: column; flex-shrink: 0; }
+        .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .logo { height: var(--header-h); display: flex; align-items: center; padding-left: 24px; font-size: 20px; font-weight: bold; color: #fff; background: rgba(255,255,255,0.1); }
+        .nav-item { padding: 0 24px; height: 50px; line-height: 50px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; }
+        .nav-item:hover { color: #fff; }
+        .nav-item.active { background: var(--primary); color: #fff; }
+        .header { height: var(--header-h); background: #fff; box-shadow: 0 1px 4px rgba(0,21,41,0.08); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; z-index: 10; }
+        .content-area { flex: 1; overflow-y: auto; padding: 24px; position: relative; }
+        .card { background: #fff; border-radius: var(--radius); padding: 24px; margin-bottom: 24px; box-shadow: var(--shadow); }
+        .btn { background: var(--primary); color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; transition: 0.3s; font-size: 14px; }
+        .btn:hover { opacity: 0.9; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary { background: #fff; color: var(--text-main); border: 1px solid var(--border-color); }
+        .btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-success { background: var(--success); }
+        .btn-sm { padding: 4px 12px; font-size: 12px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+        .hidden { display: none !important; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 16px; background: #fafafa; border-bottom: 1px solid #f0f0f0; font-weight: 600; }
+        td { padding: 16px; border-bottom: 1px solid #f0f0f0; }
+        tr:hover td { background: #fafafa; }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-main); }
+        .form-label.required::after { content: '*'; color: var(--error); margin-left: 4px; }
+        .form-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; transition: 0.3s; }
+        .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-light); }
+        .form-input.error { border-color: var(--error); }
+        .form-input.success { border-color: var(--success); }
+        .form-error { color: var(--error); font-size: 12px; margin-top: 4px; }
+        .form-hint { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
+        .form-select { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; background: #fff; cursor: pointer; }
+        .form-textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; min-height: 100px; resize: vertical; }
+        .tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font-size: 12px; background: var(--primary-light); color: var(--primary); margin: 2px; }
+        .tag-success { background: #f6ffed; color: var(--success); }
+        .tag .tag-close { cursor: pointer; opacity: 0.6; }
+        .tag .tag-close:hover { opacity: 1; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal { background: #fff; border-radius: var(--radius); width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+        .modal-header { padding: 20px 24px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
+        .modal-title { font-size: 18px; font-weight: 600; }
+        .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); }
+        .modal-close:hover { color: var(--text-main); }
+        .modal-body { padding: 24px; }
+        .modal-footer { padding: 16px 24px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; gap: 12px; }
+        .steps { display: flex; margin-bottom: 32px; }
+        .step { flex: 1; text-align: center; position: relative; }
+        .step::after { content: ''; position: absolute; top: 16px; left: 50%; width: 100%; height: 2px; background: #e8e8e8; z-index: 0; }
+        .step:last-child::after { display: none; }
+        .step-icon { width: 32px; height: 32px; border-radius: 50%; background: #e8e8e8; color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; font-weight: 600; position: relative; z-index: 1; }
+        .step.active .step-icon { background: var(--primary); color: #fff; }
+        .step.completed .step-icon { background: var(--success); color: #fff; }
+        .step-text { margin-top: 8px; font-size: 12px; color: var(--text-muted); }
+        .step.active .step-text { color: var(--primary); font-weight: 500; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+        .status-active { background: var(--success); }
+        .status-pending { background: var(--warning); }
+        .status-lost { background: var(--text-muted); }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+        .badge-primary { background: var(--primary-light); color: var(--primary); }
+        .badge-success { background: #f6ffed; color: var(--success); }
+        .badge-warning { background: #fffbe6; color: #d48806; }
+        .badge-error { background: #fff2f0; color: var(--error); }
+        .filter-bar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .filter-group { display: flex; align-items: center; gap: 8px; }
+        .filter-label { font-size: 14px; color: var(--text-sub); }
+        .filter-select { padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; background: #fff; }
+        .search-input { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; width: 240px; }
+        .toast { position: fixed; top: 80px; right: 24px; padding: 12px 20px; border-radius: 4px; color: #fff; font-size: 14px; z-index: 2000; animation: slideIn 0.3s ease; }
+        .toast-success { background: var(--success); }
+        .toast-error { background: var(--error); }
+        .toast-warning { background: var(--warning); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .contact-card { border: 1px solid #f0f0f0; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+        .contact-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .contact-role { font-size: 12px; padding: 2px 8px; border-radius: 4px; background: var(--primary-light); color: var(--primary); }
+        .contact-role.primary { background: #f6ffed; color: var(--success); }
+        .contact-role.technical { background: #fffbe6; color: #d48806; }
+        .log-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border-bottom: 1px solid #f0f0f0; }
+        .log-item:last-child { border-bottom: none; }
+        .log-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--primary-light); color: var(--primary); flex-shrink: 0; }
+        .log-content { flex: 1; }
+        .log-title { font-weight: 500; margin-bottom: 4px; }
+        .log-desc { font-size: 13px; color: var(--text-sub); }
+        .log-time { font-size: 12px; color: var(--text-muted); }
+        .customer-detail-header { display: flex; align-items: center; gap: 20px; margin-bottom: 24px; }
+        .customer-avatar { width: 64px; height: 64px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; color: #fff; }
+        .customer-info h2 { margin-bottom: 8px; }
+        .customer-meta { display: flex; gap: 16px; color: var(--text-sub); font-size: 14px; }
+        .tab-nav { display: flex; border-bottom: 1px solid #f0f0f0; margin-bottom: 20px; }
+        .tab-item { padding: 12px 20px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-sub); transition: 0.3s; }
+        .tab-item:hover { color: var(--primary); }
+        .tab-item.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .sensitive { filter: blur(4px); transition: 0.3s; cursor: pointer; }
+        .sensitive:hover { filter: none; }
+        .duplicate-warning { background: #fffbe6; border: 1px solid #ffe58f; border-radius: 4px; padding: 12px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+        .timeline { position: relative; padding-left: 24px; }
+        .timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: #e8e8e8; }
+        .timeline-item { position: relative; padding-bottom: 20px; }
+        .timeline-item::before { content: ''; position: absolute; left: -20px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--primary); border: 2px solid #fff; }
+        .timeline-date { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+        .timeline-content { background: #fafafa; padding: 12px; border-radius: 4px; }
+        @media (max-width: 1200px) { .grid-4 { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) {
+            .sidebar { width: 60px; }
+            .logo { padding-left: 12px; font-size: 16px; }
+            .nav-item { padding: 0 12px; text-align: center; }
+            .nav-item span { display: none; }
+            .grid-4, .grid-2 { grid-template-columns: 1fr; }
+            .content-area { padding: 16px; }
+            .modal { width: 95%; margin: 10px; }
+            .filter-bar { flex-direction: column; align-items: stretch; }
+            .search-input { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <aside class="sidebar">
+            <div class="logo">CRM PRO</div>
+            <nav>
+                <div class="nav-item active" onclick="switchTab('dashboard', this)"><span>📊</span><span>仪表盘</span></div>
+                <div class="nav-item" onclick="switchTab('customers', this)"><span>👥</span><span>客户管理</span></div>
+                <div class="nav-item" onclick="switchTab('sales', this)"><span>💼</span><span>销售机会</span></div>
+                <div class="nav-item" onclick="switchTab('contacts', this)"><span>📇</span><span>联系人</span></div>
+                <div class="nav-item" onclick="switchTab('tasks', this)"><span>📋</span><span>任务管理</span></div>
+                <div class="nav-item" onclick="switchTab('logs', this)"><span>📝</span><span>操作日志</span></div>
+            </nav>
+        </aside>
+        <main class="main">
+            <header class="header">
+                <div style="font-weight: 500;">工作台</div>
+                <div style="display:flex; align-items:center; gap:16px;">
+                    <span style="color:var(--text-sub); font-size:14px;">管理员</span>
+                    <div style="width:32px; height:32px; background:var(--primary); border-radius:50%; color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px;">A</div>
+                </div>
+            </header>
+            <div class="content-area">
+                <section id="page-dashboard">
+                    <div class="grid-4">
+                        <div class="card"><h3>总销售额</h3><div style="font-size:28px; color:var(--primary); font-weight:bold; margin-top:10px;">¥1,280,000</div><div style="font-size:12px; color:var(--success); margin-top:8px;">↑ 12.5% 较上月</div></div>
+                        <div class="card"><h3>新增客户</h3><div style="font-size:28px; color:#52c41a; font-weight:bold; margin-top:10px;">+320</div><div style="font-size:12px; color:var(--text-muted); margin-top:8px;">本月新增</div></div>
+                        <div class="card"><h3>待办事项</h3><div style="font-size:28px; color:#faad14; font-weight:bold; margin-top:10px;">12</div><div style="font-size:12px; color:var(--error); margin-top:8px;">3项即将到期</div></div>
+                        <div class="card"><h3>转化率</h3><div style="font-size:28px; color:#f5222d; font-weight:bold; margin-top:10px;">24.5%</div><div style="font-size:12px; color:var(--success); margin-top:8px;">↑ 2.3% 较上月</div></div>
+                    </div>
+                    <div class="card">
+                        <h3>销售漏斗</h3>
+                        <div style="margin-top:20px; display:flex; flex-direction:column; gap:10px;">
+                            <div style="background:#e6f7ff; height:40px; display:flex; align-items:center; padding-left:10px; border-radius:4px;">线索 (100%)</div>
+                            <div style="background:#bae7ff; width:80%; height:40px; display:flex; align-items:center; padding-left:10px; border-radius:4px;">初步沟通 (80%)</div>
+                            <div style="background:#91d5ff; width:60%; height:40px; display:flex; align-items:center; padding-left:10px; border-radius:4px;">方案报价 (60%)</div>
+                            <div style="background:#69c0ff; width:40%; height:40px; display:flex; align-items:center; padding-left:10px; border-radius:4px;">谈判成交 (40%)</div>
+                        </div>
+                    </div>
+                </section>
+                <section id="page-customers" class="hidden">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <h2 style="margin:0;">客户管理</h2>
+                        <button class="btn" onclick="openAddCustomerModal()">+ 新增客户</button>
+                    </div>
+                    <div class="card">
+                        <div class="filter-bar">
+                            <input type="text" class="search-input" id="customerSearch" placeholder="搜索客户名称、联系人..." oninput="filterCustomers()">
+                            <div class="filter-group">
+                                <span class="filter-label">行业:</span>
+                                <select class="filter-select" id="filterIndustry" onchange="filterCustomers()">
+                                    <option value="">全部</option>
+                                    <option value="IT互联网">IT互联网</option>
+                                    <option value="制造业">制造业</option>
+                                    <option value="金融">金融</option>
+                                    <option value="零售">零售</option>
+                                    <option value="教育">教育</option>
+                                    <option value="医疗">医疗</option>
+                                    <option value="其他">其他</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <span class="filter-label">规模:</span>
+                                <select class="filter-select" id="filterScale" onchange="filterCustomers()">
+                                    <option value="">全部</option>
+                                    <option value="小型">小型</option>
+                                    <option value="中型">中型</option>
+                                    <option value="大型">大型</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <span class="filter-label">状态:</span>
+                                <select class="filter-select" id="filterStatus" onchange="filterCustomers()">
+                                    <option value="">全部</option>
+                                    <option value="潜在客户">潜在客户</option>
+                                    <option value="意向客户">意向客户</option>
+                                    <option value="合作中">合作中</option>
+                                    <option value="流失">流失</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <span class="filter-label">标签:</span>
+                                <select class="filter-select" id="filterTag" onchange="filterCustomers()">
+                                    <option value="">全部</option>
+                                    <option value="重点客户">重点客户</option>
+                                    <option value="VIP">VIP</option>
+                                    <option value="新客户">新客户</option>
+                                </select>
+                            </div>
+                        </div>
+                        <table id="customerTable">
+                            <thead><tr><th>客户名称</th><th>行业</th><th>规模</th><th>等级</th><th>状态</th><th>标签</th><th>预计金额</th><th>最后跟进</th><th>操作</th></tr></thead>
+                            <tbody id="customerTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+                <section id="page-sales" class="hidden">
+                    <div class="grid-4">
+                        <div class="card"><div style="font-weight:bold; font-size:16px;">企业采购平台</div><div style="color:#888; font-size:12px; margin:5px 0;">先锋科技</div><div style="margin:10px 0;">¥50,000</div><div style="height:6px; background:#f0f0f0; border-radius:3px;"><div style="width:70%; height:100%; background:var(--primary); border-radius:3px;"></div></div><div style="font-size:12px; margin-top:5px;">方案阶段</div></div>
+                        <div class="card"><div style="font-weight:bold; font-size:16px;">年度维护合同</div><div style="color:#888; font-size:12px; margin:5px 0;">云端网络</div><div style="margin:10px 0;">¥12,000</div><div style="height:6px; background:#f0f0f0; border-radius:3px;"><div style="width:30%; height:100%; background:var(--primary); border-radius:3px;"></div></div><div style="font-size:12px; margin-top:5px;">初步沟通</div></div>
+                    </div>
+                </section>
+                <section id="page-contacts" class="hidden">
+                    <h2 style="margin-bottom:20px;">联系人管理</h2>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                        <input type="text" placeholder="搜索联系人..." style="padding:8px; border:1px solid #ddd; border-radius:4px; width:240px;">
+                        <button class="btn">+ 新增</button>
+                    </div>
+                    <div class="grid-4">
+                        <div class="card" style="display:flex; align-items:center; gap:15px;"><div style="width:48px; height:48px; background:#1890ff; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;">A</div><div><div style="font-weight:bold;">艾伦</div><div style="font-size:12px; color:#888; margin-top:4px;">产品总监 | 未来科技</div></div></div>
+                        <div class="card" style="display:flex; align-items:center; gap:15px;"><div style="width:48px; height:48px; background:#52c41a; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;">B</div><div><div style="font-weight:bold;">鲍勃</div><div style="font-size:12px; color:#888; margin-top:4px;">销售经理 | 全球贸易</div></div></div>
+                        <div class="card" style="display:flex; align-items:center; gap:15px;"><div style="width:48px; height:48px; background:#faad14; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;">C</div><div><div style="font-weight:bold;">查理</div><div style="font-size:12px; color:#888; margin-top:4px;">技术顾问 | 创新工场</div></div></div>
+                        <div class="card" style="display:flex; align-items:center; gap:15px;"><div style="width:48px; height:48px; background:#f5222d; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;">D</div><div><div style="font-weight:bold;">大卫</div><div style="font-size:12px; color:#888; margin-top:4px;">采购专员 | 阳光集团</div></div></div>
+                    </div>
+                </section>
+                <section id="page-tasks" class="hidden">
+                    <h2 style="margin-bottom:20px;">任务清单</h2>
+                    <div style="margin-bottom:15px; display:flex; gap:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
+                        <span style="font-weight:bold; color:#1890ff; cursor:pointer;">全部</span>
+                        <span style="color:#666; cursor:pointer;">待处理</span>
+                        <span style="color:#666; cursor:pointer;">进行中</span>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                        <div class="card" style="margin:0; padding:15px; display:flex; align-items:center; gap:12px;"><input type="checkbox" style="width:16px; height:16px;"><div style="flex:1;"><div style="font-weight:bold;">Q3 季度销售汇报PPT</div><div style="font-size:12px; color:#888; margin-top:4px;">截止: 2024-10-30</div></div><span style="background:#ff4d4f; color:#fff; font-size:12px; padding:2px 8px; border-radius:4px;">高优先级</span></div>
+                        <div class="card" style="margin:0; padding:15px; display:flex; align-items:center; gap:12px;"><input type="checkbox" style="width:16px; height:16px;"><div style="flex:1;"><div style="font-weight:bold;">客户拜访：XX公司</div><div style="font-size:12px; color:#888; margin-top:4px;">截止: 2024-11-05</div></div><span style="background:#faad14; color:#fff; font-size:12px; padding:2px 8px; border-radius:4px;">中优先级</span></div>
+                        <div class="card" style="margin:0; padding:15px; display:flex; align-items:center; gap:12px;"><input type="checkbox" style="width:16px; height:16px;"><div style="flex:1;"><div style="font-weight:bold;">更新CRM客户数据</div><div style="font-size:12px; color:#888; margin-top:4px;">截止: 2024-11-10</div></div><span style="background:#d9d9d9; color:#fff; font-size:12px; padding:2px 8px; border-radius:4px;">低优先级</span></div>
+                    </div>
+                </section>
+                <section id="page-logs" class="hidden">
+                    <h2 style="margin-bottom:20px;">操作日志</h2>
+                    <div class="card"><div id="logList"></div></div>
+                </section>
+            </div>
+        </main>
+    </div>
+    <div id="modalContainer"></div>
+    <div id="toastContainer"></div>
+    <script>
+        let customers = [
+            { id: 1, name: '先锋科技有限公司', industry: 'IT互联网', scale: '中型', level: 'A', status: '合作中', tags: ['重点客户', 'VIP'], expectedAmount: 500000, source: '官网咨询', lastFollowUp: '2024-10-20', createTime: '2024-01-15', contacts: [{ name: '张经理', role: 'primary', phone: '138****8000', email: 'zhang@xianfeng.com', position: '采购总监' }, { name: '李工', role: 'technical', phone: '139****9001', email: 'li@xianfeng.com', position: '技术负责人' }], followRecords: [{ date: '2024-10-20', content: '电话沟通，确认合作意向', nextPlan: '下周安排方案演示' }], requirements: '需要一套完整的企业采购管理系统，支持多级审批流程', assignedTo: '销售一组' },
+            { id: 2, name: '蓝天物流集团', industry: '制造业', scale: '大型', level: 'B', status: '意向客户', tags: ['新客户'], expectedAmount: 300000, source: '展会获客', lastFollowUp: '2024-10-18', createTime: '2024-06-20', contacts: [{ name: '王总监', role: 'primary', phone: '139****5678', email: 'wang@lantan.com', position: '运营总监' }], followRecords: [{ date: '2024-10-18', content: '现场拜访，了解需求', nextPlan: '准备报价方案' }], requirements: '物流追踪系统，需要与现有ERP对接', assignedTo: '销售二组' },
+            { id: 3, name: '深海创意工作室', industry: '其他', scale: '小型', level: 'C', status: '流失', tags: [], expectedAmount: 50000, source: '老客户推荐', lastFollowUp: '2024-09-01', createTime: '2024-03-10', contacts: [{ name: '李设计', role: 'primary', phone: '137****4321', email: 'li@shenhai.com', position: '创始人' }], followRecords: [], requirements: '品牌设计服务', assignedTo: '销售一组' }
+        ];
+        let operationLogs = [
+            { time: '2024-10-20 14:30:00', user: '管理员', action: '新增客户', target: '先锋科技有限公司', detail: '创建客户基本信息' },
+            { time: '2024-10-20 14:25:00', user: '管理员', action: '编辑客户', target: '蓝天物流集团', detail: '更新联系人信息' },
+            { time: '2024-10-19 10:15:00', user: '管理员', action: '添加跟进', target: '先锋科技有限公司', detail: '记录电话沟通内容' }
+        ];
+        let currentStep = 1;
+        let formData = { basic: {}, contacts: [], tags: [], followUp: {} };
+
+        /**
+         * 切换页面标签
+         * @param {string} pageId - 页面ID
+         * @param {HTMLElement} navElement - 导航元素
+         */
+        function switchTab(pageId, navElement) {
+            document.querySelectorAll('.content-area section').forEach(el => el.classList.add('hidden'));
+            document.getElementById('page-' + pageId).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            navElement.classList.add('active');
+            if (pageId === 'customers') renderCustomerTable();
+            else if (pageId === 'logs') renderLogs();
+        }
+
+        /**
+         * 渲染客户表格
+         */
+        function renderCustomerTable() {
+            const tbody = document.getElementById('customerTableBody');
+            const filtered = getFilteredCustomers();
+            tbody.innerHTML = filtered.map(c => `<tr>
+                <td><div style="display:flex; align-items:center; gap:10px;"><div class="avatar" style="background:${getAvatarColor(c.level)};">${c.name.charAt(0)}</div><div><div style="font-weight:500;">${c.name}</div><div style="font-size:12px; color:var(--text-muted);">${c.contacts[0]?.name || '-'}</div></div></div></td>
+                <td>${c.industry}</td><td>${c.scale}</td><td><span class="badge badge-${getLevelBadgeClass(c.level)}">${c.level}级</span></td>
+                <td><span class="status-dot status-${getStatusClass(c.status)}"></span>${c.status}</td>
+                <td>${c.tags.map(t => `<span class="tag">${t}</span>`).join('')}</td>
+                <td>¥${c.expectedAmount.toLocaleString()}</td><td>${c.lastFollowUp}</td>
+                <td><button class="btn btn-sm btn-secondary" onclick="viewCustomerDetail(${c.id})">查看</button> <button class="btn btn-sm btn-secondary" onclick="editCustomer(${c.id})">编辑</button></td>
+            </tr>`).join('');
+        }
+
+        /**
+         * 获取过滤后的客户列表
+         * @returns {Array} 过滤后的客户数组
+         */
+        function getFilteredCustomers() {
+            const search = document.getElementById('customerSearch').value.toLowerCase();
+            const industry = document.getElementById('filterIndustry').value;
+            const scale = document.getElementById('filterScale').value;
+            const status = document.getElementById('filterStatus').value;
+            const tag = document.getElementById('filterTag').value;
+            return customers.filter(c => {
+                const matchSearch = !search || c.name.toLowerCase().includes(search) || c.contacts.some(ct => ct.name.toLowerCase().includes(search));
+                return matchSearch && (!industry || c.industry === industry) && (!scale || c.scale === scale) && (!status || c.status === status) && (!tag || c.tags.includes(tag));
+            });
+        }
+
+        /**
+         * 过滤客户
+         */
+        function filterCustomers() { renderCustomerTable(); }
+
+        /**
+         * 获取头像颜色
+         * @param {string} level - 客户等级
+         * @returns {string} 颜色值
+         */
+        function getAvatarColor(level) { return { A: '#f5222d', B: '#faad14', C: '#52c41a', D: '#1890ff' }[level] || '#1890ff'; }
+
+        /**
+         * 获取等级徽章样式类
+         * @param {string} level - 客户等级
+         * @returns {string} 样式类名
+         */
+        function getLevelBadgeClass(level) { return { A: 'error', B: 'warning', C: 'success', D: 'primary' }[level] || 'default'; }
+
+        /**
+         * 获取状态样式类
+         * @param {string} status - 客户状态
+         * @returns {string} 样式类名
+         */
+        function getStatusClass(status) { return { '合作中': 'active', '意向客户': 'pending', '潜在客户': 'pending', '流失': 'lost' }[status] || 'pending'; }
+
+        /**
+         * 打开新增客户弹窗
+         */
+        function openAddCustomerModal() {
+            currentStep = 1;
+            formData = { basic: {}, contacts: [{ name: '', role: 'primary', position: '', phone: '', email: '' }], tags: [], followUp: {} };
+            renderAddCustomerModal();
+        }
+
+        /**
+         * 渲染新增客户弹窗
+         */
+        function renderAddCustomerModal() {
+            document.getElementById('modalContainer').innerHTML = `<div class="modal-overlay" onclick="closeModal(event)">
+                <div class="modal" onclick="event.stopPropagation()">
+                    <div class="modal-header"><div class="modal-title">新增客户</div><button class="modal-close" onclick="closeModal()">&times;</button></div>
+                    <div class="modal-body">
+                        <div class="steps">
+                            <div class="step ${currentStep >= 1 ? (currentStep > 1 ? 'completed' : 'active') : ''}"><div class="step-icon">${currentStep > 1 ? '✓' : '1'}</div><div class="step-text">基本信息</div></div>
+                            <div class="step ${currentStep >= 2 ? (currentStep > 2 ? 'completed' : 'active') : ''}"><div class="step-icon">${currentStep > 2 ? '✓' : '2'}</div><div class="step-text">联系人</div></div>
+                            <div class="step ${currentStep >= 3 ? (currentStep > 3 ? 'completed' : 'active') : ''}"><div class="step-icon">${currentStep > 3 ? '✓' : '3'}</div><div class="step-text">分类标签</div></div>
+                            <div class="step ${currentStep >= 4 ? 'active' : ''}"><div class="step-icon">4</div><div class="step-text">跟进信息</div></div>
+                        </div>
+                        <div id="stepContent">${getStepContent()}</div>
+                    </div>
+                    <div class="modal-footer">
+                        ${currentStep > 1 ? '<button class="btn btn-secondary" onclick="prevStep()">上一步</button>' : ''}
+                        ${currentStep < 4 ? '<button class="btn" onclick="nextStep()">下一步</button>' : '<button class="btn btn-success" onclick="submitCustomer()">提交</button>'}
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        /**
+         * 获取步骤内容
+         * @returns {string} HTML内容
+         */
+        function getStepContent() {
+            if (currentStep === 1) return getBasicInfoStep();
+            if (currentStep === 2) return getContactsStep();
+            if (currentStep === 3) return getTagsStep();
+            if (currentStep === 4) return getFollowUpStep();
+            return '';
+        }
+
+        /**
+         * 获取基本信息步骤内容
+         * @returns {string} HTML内容
+         */
+        function getBasicInfoStep() {
+            return `<div id="duplicateWarning" class="duplicate-warning hidden"><span style="color:var(--warning); font-size:20px;">⚠️</span><div><div style="font-weight:500;">检测到可能重复的客户</div><div style="font-size:13px; color:var(--text-sub);" id="duplicateInfo"></div></div></div>
+            <div class="grid-2">
+                <div class="form-group"><label class="form-label required">客户名称</label><input type="text" class="form-input" id="customerName" value="${formData.basic.name || ''}" oninput="checkDuplicate();" placeholder="请输入客户全称"></div>
+                <div class="form-group"><label class="form-label required">所属行业</label><select class="form-select" id="customerIndustry" onchange="formData.basic.industry = this.value"><option value="">请选择</option><option value="IT互联网" ${formData.basic.industry === 'IT互联网' ? 'selected' : ''}>IT互联网</option><option value="制造业" ${formData.basic.industry === '制造业' ? 'selected' : ''}>制造业</option><option value="金融" ${formData.basic.industry === '金融' ? 'selected' : ''}>金融</option><option value="零售" ${formData.basic.industry === '零售' ? 'selected' : ''}>零售</option><option value="教育" ${formData.basic.industry === '教育' ? 'selected' : ''}>教育</option><option value="医疗" ${formData.basic.industry === '医疗' ? 'selected' : ''}>医疗</option><option value="其他" ${formData.basic.industry === '其他' ? 'selected' : ''}>其他</option></select></div>
+                <div class="form-group"><label class="form-label required">企业规模</label><select class="form-select" id="customerScale" onchange="formData.basic.scale = this.value"><option value="">请选择</option><option value="小型" ${formData.basic.scale === '小型' ? 'selected' : ''}>小型（<50人）</option><option value="中型" ${formData.basic.scale === '中型' ? 'selected' : ''}>中型（50-200人）</option><option value="大型" ${formData.basic.scale === '大型' ? 'selected' : ''}>大型（>200人）</option></select></div>
+                <div class="form-group"><label class="form-label required">客户等级</label><select class="form-select" id="customerLevel" onchange="formData.basic.level = this.value"><option value="">请选择</option><option value="A" ${formData.basic.level === 'A' ? 'selected' : ''}>A级（高价值）</option><option value="B" ${formData.basic.level === 'B' ? 'selected' : ''}>B级（中价值）</option><option value="C" ${formData.basic.level === 'C' ? 'selected' : ''}>C级（一般）</option><option value="D" ${formData.basic.level === 'D' ? 'selected' : ''}>D级（待评估）</option></select></div>
+                <div class="form-group"><label class="form-label required">客户状态</label><select class="form-select" id="customerStatus" onchange="formData.basic.status = this.value"><option value="">请选择</option><option value="潜在客户" ${formData.basic.status === '潜在客户' ? 'selected' : ''}>潜在客户</option><option value="意向客户" ${formData.basic.status === '意向客户' ? 'selected' : ''}>意向客户</option><option value="合作中" ${formData.basic.status === '合作中' ? 'selected' : ''}>合作中</option></select></div>
+                <div class="form-group"><label class="form-label">来源渠道</label><select class="form-select" id="customerSource" onchange="formData.basic.source = this.value"><option value="">请选择</option><option value="官网咨询" ${formData.basic.source === '官网咨询' ? 'selected' : ''}>官网咨询</option><option value="展会获客" ${formData.basic.source === '展会获客' ? 'selected' : ''}>展会获客</option><option value="老客户推荐" ${formData.basic.source === '老客户推荐' ? 'selected' : ''}>老客户推荐</option><option value="电话营销" ${formData.basic.source === '电话营销' ? 'selected' : ''}>电话营销</option><option value="其他" ${formData.basic.source === '其他' ? 'selected' : ''}>其他</option></select></div>
+                <div class="form-group"><label class="form-label">预计合作金额</label><input type="number" class="form-input" id="expectedAmount" value="${formData.basic.expectedAmount || ''}" onchange="formData.basic.expectedAmount = this.value" placeholder="请输入金额（元）"></div>
+                <div class="form-group"><label class="form-label">分配给</label><select class="form-select" id="assignedTo" onchange="formData.basic.assignedTo = this.value"><option value="">请选择销售团队</option><option value="销售一组" ${formData.basic.assignedTo === '销售一组' ? 'selected' : ''}>销售一组</option><option value="销售二组" ${formData.basic.assignedTo === '销售二组' ? 'selected' : ''}>销售二组</option><option value="销售三组" ${formData.basic.assignedTo === '销售三组' ? 'selected' : ''}>销售三组</option></select></div>
+            </div>
+            <div class="form-group" style="margin-top:16px;"><label class="form-label">客户需求描述</label><textarea class="form-textarea" id="requirements" onchange="formData.basic.requirements = this.value" placeholder="请详细描述客户需求...">${formData.basic.requirements || ''}</textarea></div>`;
+        }
+
+        /**
+         * 获取联系人步骤内容
+         * @returns {string} HTML内容
+         */
+        function getContactsStep() {
+            return `<div style="margin-bottom:16px;"><button class="btn btn-secondary" onclick="addContact()">+ 添加联系人</button><span class="form-hint" style="margin-left:12px;">支持多个联系人，区分不同角色</span></div>
+            <div id="contactsList">${formData.contacts.map((c, i) => `<div class="contact-card">
+                <div class="contact-header"><span style="font-weight:500;">联系人 ${i + 1}</span><div><span class="contact-role ${c.role}">${getRoleName(c.role)}</span>${formData.contacts.length > 1 ? `<button class="btn btn-sm btn-secondary" style="margin-left:8px;" onclick="removeContact(${i})">删除</button>` : ''}</div></div>
+                <div class="grid-2">
+                    <div class="form-group"><label class="form-label required">姓名</label><input type="text" class="form-input" value="${c.name || ''}" onchange="updateContact(${i}, 'name', this.value)" placeholder="请输入姓名"></div>
+                    <div class="form-group"><label class="form-label required">角色</label><select class="form-select" onchange="updateContact(${i}, 'role', this.value)"><option value="primary" ${c.role === 'primary' ? 'selected' : ''}>主要联系人</option><option value="technical" ${c.role === 'technical' ? 'selected' : ''}>技术联系人</option><option value="financial" ${c.role === 'financial' ? 'selected' : ''}>财务联系人</option><option value="other" ${c.role === 'other' ? 'selected' : ''}>其他联系人</option></select></div>
+                    <div class="form-group"><label class="form-label required">职位</label><input type="text" class="form-input" value="${c.position || ''}" onchange="updateContact(${i}, 'position', this.value)" placeholder="请输入职位"></div>
+                    <div class="form-group"><label class="form-label required">电话</label><input type="tel" class="form-input" value="${c.phone || ''}" onchange="updateContact(${i}, 'phone', this.value)" placeholder="请输入电话"></div>
+                    <div class="form-group" style="grid-column: span 2;"><label class="form-label">邮箱</label><input type="email" class="form-input" value="${c.email || ''}" onchange="updateContact(${i}, 'email', this.value)" placeholder="请输入邮箱"></div>
+                </div>
+            </div>`).join('')}</div>`;
+        }
+
+        /**
+         * 获取角色名称
+         * @param {string} role - 角色代码
+         * @returns {string} 角色名称
+         */
+        function getRoleName(role) { return { primary: '主要联系人', technical: '技术联系人', financial: '财务联系人', other: '其他联系人' }[role] || '联系人'; }
+
+        /**
+         * 获取标签步骤内容
+         * @returns {string} HTML内容
+         */
+        function getTagsStep() {
+            const allTags = ['重点客户', 'VIP', '新客户', '长期合作', '战略伙伴', '潜力客户', '待激活', '高价值'];
+            return `<div class="form-group"><label class="form-label">客户标签</label><div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;">${allTags.map(t => `<span class="tag ${formData.tags.includes(t) ? 'tag-success' : ''}" style="cursor:pointer; ${formData.tags.includes(t) ? '' : 'opacity:0.7;'}" onclick="toggleTag('${t}')">${t}</span>`).join('')}</div><div style="display:flex; gap:8px;"><input type="text" class="form-input" id="customTag" placeholder="输入自定义标签" style="width:200px;"><button class="btn btn-secondary" onclick="addCustomTag()">添加</button></div></div>
+            <div class="form-group"><label class="form-label">已选标签</label><div style="min-height:40px; padding:8px; background:#fafafa; border-radius:4px;">${formData.tags.length > 0 ? formData.tags.map(t => `<span class="tag tag-success">${t}<span class="tag-close" onclick="removeTag('${t}')">&times;</span></span>`).join('') : '<span style="color:var(--text-muted);">暂无标签</span>'}</div></div>
+            <div class="form-group" style="margin-top:24px;"><label class="form-label">合作阶段</label><select class="form-select" id="cooperationStage" onchange="formData.basic.cooperationStage = this.value"><option value="">请选择</option><option value="线索" ${formData.basic.cooperationStage === '线索' ? 'selected' : ''}>线索阶段</option><option value="初步沟通" ${formData.basic.cooperationStage === '初步沟通' ? 'selected' : ''}>初步沟通</option><option value="方案报价" ${formData.basic.cooperationStage === '方案报价' ? 'selected' : ''}>方案报价</option><option value="谈判成交" ${formData.basic.cooperationStage === '谈判成交' ? 'selected' : ''}>谈判成交</option><option value="已签约" ${formData.basic.cooperationStage === '已签约' ? 'selected' : ''}>已签约</option></select></div>
+            <div style="margin-top:16px; padding:16px; background:#e6f7ff; border-radius:4px;"><div style="font-weight:500; margin-bottom:8px;">📋 快速模板</div><div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="btn btn-sm btn-secondary" onclick="applyTemplate('enterprise')">企业客户</button><button class="btn btn-sm btn-secondary" onclick="applyTemplate('sme')">中小企业</button><button class="btn btn-sm btn-secondary" onclick="applyTemplate('startup')">创业公司</button></div></div>`;
+        }
+
+        /**
+         * 获取跟进信息步骤内容
+         * @returns {string} HTML内容
+         */
+        function getFollowUpStep() {
+            return `<div class="grid-2">
+                <div class="form-group"><label class="form-label">首次跟进日期</label><input type="date" class="form-input" id="firstFollowDate" value="${formData.followUp.firstFollowDate || ''}" onchange="formData.followUp.firstFollowDate = this.value"></div>
+                <div class="form-group"><label class="form-label">下次跟进日期</label><input type="date" class="form-input" id="nextFollowDate" value="${formData.followUp.nextFollowDate || ''}" onchange="formData.followUp.nextFollowDate = this.value"></div>
+            </div>
+            <div class="form-group"><label class="form-label">跟进记录</label><textarea class="form-textarea" id="followContent" onchange="formData.followUp.content = this.value" placeholder="记录本次跟进的主要内容...">${formData.followUp.content || ''}</textarea></div>
+            <div class="form-group"><label class="form-label">后续计划</label><textarea class="form-textarea" id="nextPlan" onchange="formData.followUp.nextPlan = this.value" placeholder="记录后续跟进计划...">${formData.followUp.nextPlan || ''}</textarea></div>
+            <div style="margin-top:16px; padding:16px; background:#f6ffed; border-radius:4px; border:1px solid #b7eb8f;"><div style="font-weight:500; margin-bottom:8px;">✅ 创建后自动执行</div><ul style="margin-left:20px; color:var(--text-sub); font-size:13px;"><li>自动通知分配的销售团队</li><li>创建首次跟进任务提醒</li><li>生成客户档案编号</li></ul></div>`;
+        }
+
+        /**
+         * 添加联系人
+         */
+        function addContact() { formData.contacts.push({ name: '', role: 'other', position: '', phone: '', email: '' }); renderAddCustomerModal(); }
+
+        /**
+         * 移除联系人
+         * @param {number} index - 联系人索引
+         */
+        function removeContact(index) { formData.contacts.splice(index, 1); renderAddCustomerModal(); }
+
+        /**
+         * 更新联系人信息
+         * @param {number} index - 联系人索引
+         * @param {string} field - 字段名
+         * @param {string} value - 值
+         */
+        function updateContact(index, field, value) { formData.contacts[index][field] = value; }
+
+        /**
+         * 切换标签
+         * @param {string} tag - 标签名称
+         */
+        function toggleTag(tag) { const i = formData.tags.indexOf(tag); if (i > -1) formData.tags.splice(i, 1); else formData.tags.push(tag); renderAddCustomerModal(); }
+
+        /**
+         * 添加自定义标签
+         */
+        function addCustomTag() { const input = document.getElementById('customTag'); const tag = input.value.trim(); if (tag && !formData.tags.includes(tag)) { formData.tags.push(tag); input.value = ''; renderAddCustomerModal(); } }
+
+        /**
+         * 移除标签
+         * @param {string} tag - 标签名称
+         */
+        function removeTag(tag) { const i = formData.tags.indexOf(tag); if (i > -1) { formData.tags.splice(i, 1); renderAddCustomerModal(); } }
+
+        /**
+         * 应用模板
+         * @param {string} type - 模板类型
+         */
+        function applyTemplate(type) {
+            const templates = { enterprise: { scale: '大型', level: 'A', tags: ['重点客户', 'VIP', '战略伙伴'] }, sme: { scale: '中型', level: 'B', tags: ['潜力客户', '长期合作'] }, startup: { scale: '小型', level: 'C', tags: ['新客户', '高价值'] } };
+            const t = templates[type];
+            if (t) { formData.basic.scale = t.scale; formData.basic.level = t.level; t.tags.forEach(tag => { if (!formData.tags.includes(tag)) formData.tags.push(tag); }); showToast('模板已应用', 'success'); renderAddCustomerModal(); }
+        }
+
+        /**
+         * 检查重复客户
+         */
+        function checkDuplicate() {
+            const name = document.getElementById('customerName').value.trim();
+            const warning = document.getElementById('duplicateWarning');
+            const info = document.getElementById('duplicateInfo');
+            if (name.length >= 2) { const dup = customers.find(c => c.name.includes(name) || name.includes(c.name)); if (dup) { warning.classList.remove('hidden'); info.textContent = `已存在相似客户：${dup.name}`; return; } }
+            warning.classList.add('hidden');
+        }
+
+        /**
+         * 下一步
+         */
+        function nextStep() { if (validateCurrentStep()) { saveCurrentStepData(); currentStep++; renderAddCustomerModal(); } }
+
+        /**
+         * 上一步
+         */
+        function prevStep() { saveCurrentStepData(); currentStep--; renderAddCustomerModal(); }
+
+        /**
+         * 验证当前步骤
+         * @returns {boolean} 是否有效
+         */
+        function validateCurrentStep() {
+            if (currentStep === 1) {
+                if (!document.getElementById('customerName').value.trim()) { showToast('请输入客户名称', 'error'); return false; }
+                if (!document.getElementById('customerIndustry').value) { showToast('请选择所属行业', 'error'); return false; }
+                if (!document.getElementById('customerScale').value) { showToast('请选择企业规模', 'error'); return false; }
+                if (!document.getElementById('customerLevel').value) { showToast('请选择客户等级', 'error'); return false; }
+                if (!document.getElementById('customerStatus').value) { showToast('请选择客户状态', 'error'); return false; }
+            }
+            if (currentStep === 2) {
+                if (formData.contacts.length === 0) { showToast('请添加至少一个联系人', 'error'); return false; }
+                for (let c of formData.contacts) { if (!c.name || !c.phone || !c.position) { showToast('请完善联系人信息', 'error'); return false; } }
+            }
+            return true;
+        }
+
+        /**
+         * 保存当前步骤数据
+         */
+        function saveCurrentStepData() {
+            if (currentStep === 1) formData.basic = { name: document.getElementById('customerName').value.trim(), industry: document.getElementById('customerIndustry').value, scale: document.getElementById('customerScale').value, level: document.getElementById('customerLevel').value, status: document.getElementById('customerStatus').value, source: document.getElementById('customerSource').value, expectedAmount: document.getElementById('expectedAmount').value, assignedTo: document.getElementById('assignedTo').value, requirements: document.getElementById('requirements').value };
+            if (currentStep === 4) formData.followUp = { firstFollowDate: document.getElementById('firstFollowDate')?.value || '', nextFollowDate: document.getElementById('nextFollowDate')?.value || '', content: document.getElementById('followContent')?.value || '', nextPlan: document.getElementById('nextPlan')?.value || '' };
+        }
+
+        /**
+         * 提交客户
+         */
+        function submitCustomer() {
+            saveCurrentStepData();
+            const newCustomer = {
+                id: Date.now(), name: formData.basic.name, industry: formData.basic.industry, scale: formData.basic.scale, level: formData.basic.level, status: formData.basic.status,
+                tags: formData.tags, expectedAmount: parseInt(formData.basic.expectedAmount) || 0, source: formData.basic.source,
+                lastFollowUp: new Date().toISOString().split('T')[0], createTime: new Date().toISOString().split('T')[0],
+                contacts: formData.contacts.map(c => ({ ...c, phone: maskPhone(c.phone) })),
+                followRecords: formData.followUp.content ? [{ date: new Date().toISOString().split('T')[0], content: formData.followUp.content, nextPlan: formData.followUp.nextPlan }] : [],
+                requirements: formData.basic.requirements, assignedTo: formData.basic.assignedTo
+            };
+            customers.unshift(newCustomer);
+            addLog('新增客户', newCustomer.name, '创建客户基本信息及联系人');
+            closeModal();
+            showToast('客户创建成功！已通知相关销售人员', 'success');
+            renderCustomerTable();
+        }
+
+        /**
+         * 手机号脱敏
+         * @param {string} phone - 手机号
+         * @returns {string} 脱敏后的手机号
+         */
+        function maskPhone(phone) { return phone && phone.length === 11 ? phone.substring(0, 3) + '****' + phone.substring(7) : phone; }
+
+        /**
+         * 关闭弹窗
+         * @param {Event} event - 事件对象
+         */
+        function closeModal(event) { if (event && event.target !== event.currentTarget) return; document.getElementById('modalContainer').innerHTML = ''; }
+
+        /**
+         * 显示提示
+         * @param {string} message - 消息内容
+         * @param {string} type - 类型
+         */
+        function showToast(message, type = 'success') { const container = document.getElementById('toastContainer'); const toast = document.createElement('div'); toast.className = `toast toast-${type}`; toast.textContent = message; container.appendChild(toast); setTimeout(() => toast.remove(), 3000); }
+
+        /**
+         * 查看客户详情
+         * @param {number} id - 客户ID
+         */
+        function viewCustomerDetail(id) {
+            const c = customers.find(x => x.id === id);
+            if (!c) return;
+            document.getElementById('modalContainer').innerHTML = `<div class="modal-overlay" onclick="closeModal(event)">
+                <div class="modal" style="max-width:900px;" onclick="event.stopPropagation()">
+                    <div class="modal-header"><div class="modal-title">客户详情</div><button class="modal-close" onclick="closeModal()">&times;</button></div>
+                    <div class="modal-body">
+                        <div class="customer-detail-header"><div class="customer-avatar" style="background:${getAvatarColor(c.level)};">${c.name.charAt(0)}</div><div class="customer-info"><h2>${c.name}</h2><div class="customer-meta"><span><span class="status-dot status-${getStatusClass(c.status)}"></span>${c.status}</span><span>${c.industry}</span><span>${c.scale}</span><span class="badge badge-${getLevelBadgeClass(c.level)}">${c.level}级客户</span></div><div style="margin-top:8px;">${c.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div></div></div>
+                        <div class="tab-nav"><div class="tab-item active" onclick="switchDetailTab('basic', this)">基本信息</div><div class="tab-item" onclick="switchDetailTab('contacts', this)">联系人</div><div class="tab-item" onclick="switchDetailTab('follow', this)">跟进记录</div></div>
+                        <div id="detailContent">
+                            <div id="detail-basic"><div class="grid-2"><div class="form-group"><label class="form-label">客户等级</label><div>${c.level}级</div></div><div class="form-group"><label class="form-label">来源渠道</label><div>${c.source || '-'}</div></div><div class="form-group"><label class="form-label">预计合作金额</label><div>¥${c.expectedAmount.toLocaleString()}</div></div><div class="form-group"><label class="form-label">分配团队</label><div>${c.assignedTo || '-'}</div></div><div class="form-group"><label class="form-label">创建时间</label><div>${c.createTime}</div></div><div class="form-group"><label class="form-label">最后跟进</label><div>${c.lastFollowUp}</div></div></div><div class="form-group"><label class="form-label">客户需求</label><div style="padding:12px; background:#fafafa; border-radius:4px;">${c.requirements || '暂无'}</div></div></div>
+                            <div id="detail-contacts" class="hidden">${c.contacts.map(ct => `<div class="contact-card"><div class="contact-header"><div style="display:flex; align-items:center; gap:12px;"><div class="avatar" style="width:36px; height:36px; font-size:14px; background:var(--primary);">${ct.name.charAt(0)}</div><div><div style="font-weight:500;">${ct.name}</div><div style="font-size:12px; color:var(--text-muted);">${ct.position}</div></div></div><span class="contact-role ${ct.role}">${getRoleName(ct.role)}</span></div><div style="margin-top:12px; display:flex; gap:24px; font-size:13px;"><span>📞 <span class="sensitive">${ct.phone}</span></span><span>📧 ${ct.email || '-'}</span></div></div>`).join('')}</div>
+                            <div id="detail-follow" class="hidden"><div class="timeline">${c.followRecords.length > 0 ? c.followRecords.map(r => `<div class="timeline-item"><div class="timeline-date">${r.date}</div><div class="timeline-content"><div>${r.content}</div>${r.nextPlan ? `<div style="margin-top:8px; font-size:12px; color:var(--text-sub);">后续计划：${r.nextPlan}</div>` : ''}</div></div>`).join('') : '<div style="color:var(--text-muted); text-align:center; padding:20px;">暂无跟进记录</div>'}</div></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer"><button class="btn btn-secondary" onclick="addFollowRecord(${c.id})">添加跟进</button><button class="btn btn-secondary" onclick="closeModal()">关闭</button></div>
+                </div>
+            </div>`;
+        }
+
+        /**
+         * 切换详情标签
+         * @param {string} tab - 标签ID
+         * @param {HTMLElement} el - 元素
+         */
+        function switchDetailTab(tab, el) {
+            document.querySelectorAll('#detailContent > div').forEach(x => x.classList.add('hidden'));
+            document.getElementById('detail-' + tab).classList.remove('hidden');
+            document.querySelectorAll('.tab-item').forEach(x => x.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        /**
+         * 编辑客户
+         * @param {number} id - 客户ID
+         */
+        function editCustomer(id) { showToast('编辑功能开发中...', 'warning'); }
+
+        /**
+         * 添加跟进记录
+         * @param {number} id - 客户ID
+         */
+        function addFollowRecord(id) { showToast('添加跟进功能开发中...', 'warning'); }
+
+        /**
+         * 渲染操作日志
+         */
+        function renderLogs() {
+            document.getElementById('logList').innerHTML = operationLogs.map(log => `<div class="log-item"><div class="log-icon">📝</div><div class="log-content"><div class="log-title">${log.action}：${log.target}</div><div class="log-desc">${log.detail}</div></div><div class="log-time">${log.time}</div></div>`).join('');
+        }
+
+        /**
+         * 添加操作日志
+         * @param {string} action - 操作类型
+         * @param {string} target - 操作对象
+         * @param {string} detail - 操作详情
+         */
+        function addLog(action, target, detail) {
+            operationLogs.unshift({ time: new Date().toLocaleString('zh-CN'), user: '管理员', action, target, detail });
+        }
+    </script>
+</body>
+</html>
