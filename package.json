@@ -1,0 +1,24 @@
+{
+  "name": "crm-html-glm5",
+  "version": "1.0.0",
+  "description": "一个现代化的纯前端CRM（客户关系管理）系统，采用原生HTML/CSS/JavaScript开发，无需后端依赖，开箱即用。",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BenHPM/crm-html-glm5.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/BenHPM/crm-html-glm5/issues"
+  },
+  "homepage": "https://github.com/BenHPM/crm-html-glm5#readme",
+  "dependencies": {
+    "sharp": "^0.34.5"
+  }
+}
